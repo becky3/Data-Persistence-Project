@@ -12,16 +12,20 @@ public class MainManager : MonoBehaviour
 
     public Text ScoreText;
     public GameObject GameOverText;
+    public Text bestScoreText;
     
     private bool m_Started = false;
     private int m_Points;
     
     private bool m_GameOver = false;
 
-    
+    private ShareManager shareManager;
+
     // Start is called before the first frame update
     void Start()
     {
+        shareManager = ShareManager.Instance;
+
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
         
@@ -36,6 +40,8 @@ public class MainManager : MonoBehaviour
                 brick.onDestroyed.AddListener(AddPoint);
             }
         }
+
+        UpdateBestScoreText();
     }
 
     private void Update()
@@ -58,6 +64,9 @@ public class MainManager : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            } else if (Input.GetKeyDown(KeyCode.T))
+            {
+                SceneManager.LoadScene(0);
             }
         }
     }
@@ -68,9 +77,31 @@ public class MainManager : MonoBehaviour
         ScoreText.text = $"Score : {m_Points}";
     }
 
+    void UpdateBestScoreText()
+    {
+        shareManager.LoadBestScore();
+        var bestScoreInfo = shareManager.bestScoreInfo;
+
+        if (bestScoreInfo == null)
+        {
+            bestScoreText.text = $"Challenge Best Score!!";
+            return;
+        }
+
+        var userName = bestScoreInfo.userName;
+        var score = bestScoreInfo.bestScore;
+        bestScoreText.text = $"High Score : {userName} : {score}";
+    }
+
     public void GameOver()
     {
         m_GameOver = true;
         GameOverText.SetActive(true);
+
+        if (shareManager.isBestScore(m_Points))
+        {
+            Debug.Log("best Score!!");
+            shareManager.SaveBestScore(m_Points);
+        }
     }
 }
